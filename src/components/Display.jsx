@@ -25,6 +25,8 @@ const Display = ({
   setUsername,
   Password,
   setPassword,
+  setCurrentSession,
+  currentSession
 }) => {
   const navigate = useNavigate();
 
@@ -148,26 +150,76 @@ const Display = ({
     try {
       var condition = navigator.onLine
         ? get(child(dbRef, "ListOfStudents/" + `${Password}`)).then(
-            (snapshot) => {
-              // setProcessingStudentVerification(false)
-              if (snapshot.exists()) {
-                const data = snapshot.val();
-                if (data.Surname === Username) {
-                  setStudentData(data);
-                  setAuthenticating(false);
-                  get(child(dbRef, "TermAccessible/")).then((snapshot) => {
-                    if (snapshot.exists()) {
-                      const value = snapshot.val();
-                      setTermAccessible(value.TermAccessible);
+          (snapshot) => {
+            // setProcessingStudentVerification(false)
+            if (snapshot.exists()) {
+              const data = snapshot.val();
 
-                      get(
-                        child(
-                          dbRef,
-                          "Examination/" +
-                            `${value.TermAccessible}/` +
-                            `${data.Class}/`
-                        )
-                      ).then((snapshot) => {
+              if (data.Surname === Username) {
+                setStudentData(data);
+                setAuthenticating(false);
+
+                get(child(dbRef, "TermAccessible/")).then((snapshot) => {
+                  if (snapshot.exists()) {
+                    const value = snapshot.val();
+                    const currentTerm = value.TermAccessible
+                    setTermAccessible(currentTerm);
+
+                    //get the current session we're currently in
+                    get(child(dbRef, "CurrentSession/")).then((CurrentSessionRetrieved) => {
+                      if (CurrentSessionRetrieved.exists()) {
+                        const session = CurrentSessionRetrieved.val();
+                        const CurrentSessionData = session.session
+                        setCurrentSession(CurrentSessionData)
+                        const StudentClass = data[CurrentSessionData].Class
+                        console.log("first class", StudentClass,"CurrentSessionData:",CurrentSessionData)
+                        get(
+                          child(
+                            dbRef,
+                            "Examination/" +
+                            `${CurrentSessionData}/` +
+                            `${currentTerm}/` +
+                            `${StudentClass}/`
+                          )
+                        ).then((snapshot) => {
+                          if (snapshot.exists()) {
+                            setListOfExaminationSubjectAvailable(true);
+                            console.log("snapshot.val():",snapshot.val())
+                            const hours = snapshot.val()?.OpenedSubject?.hours ?
+                              JSON.parse(snapshot.val()?.OpenedSubject?.hours) * 60
+                              : 0;
+                            const minutes = snapshot.val()?.OpenedSubject?.minutes ?
+                              JSON.parse(
+                                snapshot.val()?.OpenedSubject.minutes
+                              ) : 0;
+                            setTotalMinutes(hours + minutes);
+                            setShuffle(snapshot.val().OpenedSubject.Shuffle);
+                            setSubject(
+                              snapshot.val().OpenedSubject.OpenedSubject
+                            );
+                            ListOfExaminationSubject.push(
+                              snapshot.val().OpenedSubject.OpenedSubject
+                            );
+                            
+                          } else {
+                            alert(
+                              "Examination has not been fixed for your class yet!"
+                            );
+                            setListOfExaminationSubject(null);
+                          }
+                        });
+                      }
+                      else { alert("There's currently no access to any session's data") }
+                    })
+                      // get(
+                      //   child(
+                      //     dbRef,
+                      //     "Examination/" +
+                      //     `${value.TermAccessible}/` +
+                      //     `${data.Class}/`
+                      //   )
+                      // )
+                      .then((snapshot) => {
                         if (snapshot.exists()) {
                           const hours =
                             JSON.parse(snapshot.val().OpenedSubject.hours) * 60;
@@ -190,16 +242,19 @@ const Display = ({
                           setListOfExaminationSubject(null);
                         }
                       });
-                    }
-                  });
-                } else {
-                  setAuthenticating(false);
-                  alert("invalid credentials");
-                  setStudentData(null);
-                }
+                  }
+                });
+              } else {
+                setAuthenticating(false);
+                alert("invalid credentials");
+                setStudentData(null);
               }
             }
-          )
+            else {
+              alert("Invalid credentials")
+            }
+          }
+        )
         : (setAuthenticating(false), alert("You're currently offline!"));
     } catch (error) {
       setAuthenticating(false);
@@ -211,8 +266,8 @@ const Display = ({
     studentData.Class == null
       ? alert("Student class not retrieved!")
       : subject == null
-      ? alert("Please select subject")
-      : ValidateCandidate();
+        ? alert("Please select subject")
+        : ValidateCandidate();
   }
   function ValidateCandidate(e) {
     e.preventDefault();
@@ -230,9 +285,10 @@ const Display = ({
               child(
                 dbRef,
                 "ListOfStudents/" +
-                  `${studentData.RegNo}/` +
-                  `${TermAccessible}/` +
-                  `${subject}/`
+                `${studentData.RegNo}/` +
+                `${currentSession}/` +
+                `${TermAccessible}/` +
+                `${subject}/`
               )
             ).then((snapshot) => {
               // setProcessingStudentVerification(false)
@@ -262,8 +318,9 @@ const Display = ({
         child(
           dbRef,
           "Examination/" +
+          `${currentSession}/` +
           `${TermAccessible}/` +
-          `${studentData.Class}/` +
+          `${studentData[currentSession].Class}/` +
           "Questions/" +
           `${subject}/`
         )
@@ -272,24 +329,24 @@ const Display = ({
           // setGettingQuestions(false)
           // setStage(3)
           // const data = snapshot.val();
-          if (Shuffle==true) {
+          if (Shuffle == true) {
             const data = snapshot.val().sort((a, b) => 0.5 - Math.random())
-            const val=[]
-            data.map((data,i)=>val.push(data));
+            const val = []
+            data.map((data, i) => val.push(data));
             setQuestions(val);
             setStep(2)
           } if (Shuffle == false) {
             // alert("NoShuffle",Shuffle)
             const data = snapshot.val()
-            const val=[]
-            data.map((data,i)=>val.push(data));
+            const val = []
+            data.map((data, i) => val.push(data));
             setQuestions(val);
             setStep(2)
           }
           else {
             const data = snapshot.val().sort((a, b) => 0.5 - Math.random())
-            const val=[]
-            data.map((data,i)=>val.push(data));
+            const val = []
+            data.map((data, i) => val.push(data));
             setQuestions(val);
             setStep(2)
           }
@@ -421,7 +478,7 @@ const Display = ({
                       </p>
                       <p id="smaller">of</p>
                       <p style={{ fontSize: 20 }}>
-                        {studentData != null && <b> {studentData.Class} </b>}
+                        {studentData != null && <b> {studentData[currentSession].Class} </b>}
                       </p>
                     </div>
                   )}
@@ -459,6 +516,8 @@ const Display = ({
           setStudentData={setStudentData}
           TermAccessible={TermAccessible}
           setTermAccessible={setTermAccessible}
+          currentSession={currentSession}
+          setCurrentSession={setCurrentSession}
           Username={Username}
           setStep={setStep}
         />

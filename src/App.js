@@ -13,6 +13,7 @@ function App() {
   const [Password, setPassword] = useState("");
   const [Username, setUsername] = useState("");
   const [TermAccessible, setTermAccessible] = useState(null);
+  const [currentSession, setCurrentSession] = useState(null);
   const [studentData, setStudentData] = useState(null);
   const [TotalMinutes, setTotalMinutes] = useState(0)
   const [Shuffle, setShuffle] = useState(true)
@@ -20,7 +21,8 @@ function App() {
     <div className="App">
       <Router>
         <Routes>
-        <Route path='/' element={<Display
+        <Route path='/' element={
+          <Display
           setTotalMinutes={setTotalMinutes}
             Questions={Questions}
             setQuestions={setQuestions}
@@ -36,6 +38,8 @@ function App() {
              setStudentData = {setStudentData}
             TermAccessible={TermAccessible}
             setTermAccessible={setTermAccessible}
+            currentSession={currentSession}
+            setCurrentSession={setCurrentSession}
             subject={subject} />} />
          <Route path='/Examinationpage' element={<Examinationpage
             Questions={Questions}
@@ -51,6 +55,8 @@ function App() {
              setStudentData = {setStudentData}
             TermAccessible={TermAccessible}
             setTermAccessible={setTermAccessible}
+            currentSession={currentSession}
+            setCurrentSession={setCurrentSession}
             Username={Username} />} />
           <Route path='/Donepage' element={<Donepage />} />
           <Route path='/instructionpage' element={<Instructionpage/>}/>

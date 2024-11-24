@@ -24,6 +24,8 @@ const Examinationpage = ({
   setUsername,
   Password,
   setPassword,
+  setCurrentSession,
+  currentSession
 }) => {
   const [currentNo, setCurrentNo] = useState(0);
   const [checked, setchecked] = useState("first");
@@ -77,7 +79,7 @@ const Examinationpage = ({
       update(
         ref(
           db,
-          "ListOfStudents/" + `${Password}/` + `${TermAccessible}/` + subject
+          "ListOfStudents/" + `${Password}/` + `${currentSession}/` +`${TermAccessible}/` + subject
         ),
         {
           subject: score,
@@ -90,14 +92,13 @@ const Examinationpage = ({
             dbRef,
             "ListOfStudents/" +
               `${Password}/` +
+              `${currentSession}/` +
               `${TermAccessible}/` +
               `${subject}/`
           )
         ).then((snapshot) => {
           // setProcessingStudentVerification(false)
           if (snapshot.exists()) {
-            // setProcessingLogin(false);
-            console.log(snapshot.val());
             alert(`Score Uploaded`);
             setUploadingScore(false);
             setScoreUploadfailed(false);
@@ -138,7 +139,11 @@ const Examinationpage = ({
       update(
         ref(
           db,
-          "ListOfStudents/" + `${Password}/` + `${TermAccessible}/` + subject
+          "ListOfStudents/" + 
+          `${Password}/` + 
+          `${currentSession}/` +
+          `${TermAccessible}/` +
+           subject
         ),
         {
           subject: score,
@@ -151,14 +156,13 @@ const Examinationpage = ({
             dbRef,
             "ListOfStudents/" +
               `${Password}/` +
+              `${currentSession}/` +
               `${TermAccessible}/` +
               `${subject}/`
           )
         ).then((snapshot) => {
           // setProcessingStudentVerification(false)
           if (snapshot.exists()) {
-            // setProcessingLogin(false);
-            console.log(snapshot.val());
             alert(`Score Uploaded`);
             setUploadingScore(false);
             setScoreUploadfailed(false);
