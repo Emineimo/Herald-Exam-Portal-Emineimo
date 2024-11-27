@@ -141,7 +141,6 @@ const Display = ({
   const starCountRef = ref(db, "Examination/");
   // onValue(starCountRef, (snapshot) => {
   //   const data = snapshot.val();
-  //   console.log("myer", data)
   // });
 
   function getTermAccessible(e) {
@@ -154,9 +153,8 @@ const Display = ({
             // setProcessingStudentVerification(false)
             if (snapshot.exists()) {
               const data = snapshot.val();
-
               if (data.Surname === Username) {
-                setStudentData(data);
+                ;
                 setAuthenticating(false);
 
                 get(child(dbRef, "TermAccessible/")).then((snapshot) => {
@@ -170,9 +168,11 @@ const Display = ({
                       if (CurrentSessionRetrieved.exists()) {
                         const session = CurrentSessionRetrieved.val();
                         const CurrentSessionData = session.session
+                        console.log("data[CurrentSessionData]",data[CurrentSessionData])
+                        
                         setCurrentSession(CurrentSessionData)
+                        setCurrentSessionHere(CurrentSessionData)
                         const StudentClass = data[CurrentSessionData].Class
-                        console.log("first class", StudentClass,"CurrentSessionData:",CurrentSessionData)
                         get(
                           child(
                             dbRef,
@@ -182,9 +182,9 @@ const Display = ({
                             `${StudentClass}/`
                           )
                         ).then((snapshot) => {
+                          setStudentData(data)
                           if (snapshot.exists()) {
                             setListOfExaminationSubjectAvailable(true);
-                            console.log("snapshot.val():",snapshot.val())
                             const hours = snapshot.val()?.OpenedSubject?.hours ?
                               JSON.parse(snapshot.val()?.OpenedSubject?.hours) * 60
                               : 0;
@@ -200,7 +200,7 @@ const Display = ({
                             ListOfExaminationSubject.push(
                               snapshot.val().OpenedSubject.OpenedSubject
                             );
-                            
+
                           } else {
                             alert(
                               "Examination has not been fixed for your class yet!"
@@ -211,38 +211,9 @@ const Display = ({
                       }
                       else { alert("There's currently no access to any session's data") }
                     })
-                      // get(
-                      //   child(
-                      //     dbRef,
-                      //     "Examination/" +
-                      //     `${value.TermAccessible}/` +
-                      //     `${data.Class}/`
-                      //   )
-                      // )
-                      .then((snapshot) => {
-                        if (snapshot.exists()) {
-                          const hours =
-                            JSON.parse(snapshot.val().OpenedSubject.hours) * 60;
-                          const minutes = JSON.parse(
-                            snapshot.val().OpenedSubject.minutes
-                          );
-                          setTotalMinutes(hours + minutes);
-                          setShuffle(snapshot.val().OpenedSubject.Shuffle);
-                          setSubject(
-                            snapshot.val().OpenedSubject.OpenedSubject
-                          );
-                          ListOfExaminationSubject.push(
-                            snapshot.val().OpenedSubject.OpenedSubject
-                          );
-                          setListOfExaminationSubjectAvailable(true);
-                        } else {
-                          alert(
-                            "Examination has not been fixed for your class yet!"
-                          );
-                          setListOfExaminationSubject(null);
-                        }
-                      });
+                      
                   }
+                  else{alert("There's no term open for academic activities")}
                 });
               } else {
                 setAuthenticating(false);
@@ -320,7 +291,7 @@ const Display = ({
           "Examination/" +
           `${currentSession}/` +
           `${TermAccessible}/` +
-          `${studentData[currentSession].Class}/` +
+          `${studentData?.[currentSession]?.Class}/` +
           "Questions/" +
           `${subject}/`
         )
@@ -367,7 +338,8 @@ const Display = ({
     setAuthenticating(null);
     setStudentData(null);
   }
-
+  const [currentSessionHere, setCurrentSessionHere] = useState(null);
+  console.log("currentSessionHere:", currentSessionHere)
   return (
     <>
       {step == 1 && (
@@ -478,7 +450,7 @@ const Display = ({
                       </p>
                       <p id="smaller">of</p>
                       <p style={{ fontSize: 20 }}>
-                        {studentData != null && <b> {studentData[currentSession].Class} </b>}
+                        {studentData != null && <b> {studentData?.[currentSessionHere]?.Class} </b>}
                       </p>
                     </div>
                   )}
